@@ -1,23 +1,15 @@
-# TaxLens Zimbabwe — Backend Dependencies
-# Hosting: Render.com | Database: Supabase (PostgreSQL)
-
-# ── Web framework ─────────────────────────────────────────────
---only-binary=:all:
 fastapi==0.115.5
 uvicorn[standard]==0.32.1
-python-multipart==0.0.12        # multipart/form-data (file uploads)
-jinja2==3.1.4                   # HTML template rendering
+python-multipart==0.0.12
+jinja2==3.1.4
 
-# ── Supabase client ───────────────────────────────────────────
-supabase==2.10.0                # official Python client
-httpx==0.27.2                   # pinned — supabase 2.10.0 requires httpx>=0.27,<0.29
+supabase==2.10.0
+httpx==0.27.2
 
-# ── OCR ───────────────────────────────────────────────────────
 
-Pillow==12.2.0
-PyMuPDF==1.25.1                 # PDF → image (fitz)
+Pillow==10.4.0
+PyMuPDF==1.25.1
 
-# ── Config & validation ───────────────────────────────────────
 pydantic==2.7.4
 pydantic-settings==2.2.1
 python-dotenv==1.0.1
