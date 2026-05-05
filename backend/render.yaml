@@ -1,0 +1,26 @@
+# render.yaml — Render.com deployment config for TaxLens Zimbabwe backend.
+# Push to GitHub → connect repo in Render dashboard → it reads this file.
+
+services:
+  - type: web
+    name: taxlens-zw-backend
+    runtime: python
+    rootDir: backend                     # Render runs commands from the backend/ folder
+    region: oregon                       # oregon | frankfurt | singapore | ohio
+    plan: free                           # free (spins down) | starter $7/mo (always-on)
+
+    buildCommand: "bash build.sh"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
+    #                      ^^^^
+    #                      main:app — matches the flat main.py file in backend/
+    #                      NOT app.main:app (that would need an app/ sub-package)
+
+    envVars:
+      - key: SUPABASE_URL
+        sync: false                      # set manually in Render dashboard
+      - key: SUPABASE_SERVICE_KEY
+        sync: false                      # set manually — mark as secret
+      - key: APP_ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: "3.12.0"

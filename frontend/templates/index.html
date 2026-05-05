@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% set active_page = "home" %}
+{% block title %}TaxLens Zimbabwe — Know Your PAYE{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+
+  <!-- ── Hero ────────────────────────────────────────────── -->
+  <div class="row align-items-center g-5 mb-5">
+
+    <div class="col-lg-6">
+      <span class="tag">Zimbabwe · PAYE Transparency · For Employees</span>
+      <h1 style="font-size:clamp(2rem,5vw,3rem);font-weight:800;line-height:1.1;letter-spacing:-.03em;">
+        Know What You<br><span style="color:var(--gold)">Should</span> Be Paying
+      </h1>
+      <p style="color:var(--text-dim);font-size:1rem;margin-top:1.2rem;line-height:1.7;max-width:500px;">
+        TaxLens is a free, independent tool for Zimbabwean employees to understand PAYE,
+        estimate expected deductions, and spot possible discrepancies — privately, with no account needed.
+      </p>
+      <p style="color:var(--muted);font-size:.85rem;margin-top:.75rem;max-width:500px;">
+        This tool is <strong style="color:var(--text-dim)">not affiliated with ZIMRA</strong>.
+        It exists to help <em>you</em> understand your own pay.
+      </p>
+      <div class="d-flex flex-wrap gap-3 mt-4">
+        <a href="/calculator" class="btn-gold" style="text-decoration:none">
+          <i class="bi bi-calculator me-2"></i>Calculate My Tax
+        </a>
+        <a href="/analyzer" class="btn-ghost" style="text-decoration:none">
+          <i class="bi bi-upload me-2"></i>Analyze My Payslip
+        </a>
+      </div>
+    </div>
+
+    <!-- Sample result preview -->
+    <div class="col-lg-6">
+      <div class="card-l" style="position:relative;overflow:hidden">
+        <div style="position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(212,160,23,.12),transparent 70%);pointer-events:none"></div>
+        <span class="tag mb-3">Sample — $1,500 USD / month</span>
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <div class="card-sm">
+              <span class="lbl">PAYE Tax</span>
+              <div class="r-val" style="color:var(--red)">$280.00</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="card-sm">
+              <span class="lbl">AIDS Levy (3%)</span>
+              <div class="r-val" style="color:var(--red)">$8.40</div>
+            </div>
+          </div>
+        </div>
+        <div style="background:rgba(76,175,80,.08);border:1px solid rgba(76,175,80,.2);border-radius:8px;padding:1rem;margin-bottom:1rem">
+          <span class="lbl" style="color:var(--green)">Net Monthly Pay</span>
+          <div class="r-net">$1,211.60</div>
+        </div>
+        <div class="d-flex justify-content-between mb-1" style="font-size:.8rem;color:var(--muted)">
+          <span>Effective tax rate</span><span>19.2%</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:38%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Privacy promise ──────────────────────────────────── -->
+  <div class="note-privacy mb-5">
+    <i class="bi bi-shield-lock-fill"></i>
+    <div>
+      <strong>Your privacy matters.</strong>
+      Salary figures you type are <em>never stored</em>.
+      Payslip files are processed in memory and immediately discarded.
+      Only anonymised tax numbers are saved — and only if you choose to use a session token.
+      You can delete everything at any time.
+    </div>
+  </div>
+
+  <!-- ── Feature cards ────────────────────────────────────── -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-4">
+      <div class="card-l h-100">
+        <div style="width:42px;height:42px;background:rgba(212,160,23,.12);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:1.1rem">
+          <i class="bi bi-calculator-fill" style="color:var(--gold);font-size:1.1rem"></i>
+        </div>
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:.5rem">Manual Calculator</h3>
+        <p style="color:var(--text-dim);font-size:.875rem;line-height:1.65;margin-bottom:1rem">
+          Type your gross salary in USD or ZiG. Instantly see PAYE, AIDS Levy, total deductions, and net pay — no account needed.
+        </p>
+        <a href="/calculator" style="color:var(--gold);text-decoration:none;font-size:.85rem;font-weight:600">
+          Open calculator <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card-l h-100">
+        <div style="width:42px;height:42px;background:rgba(212,160,23,.12);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:1.1rem">
+          <i class="bi bi-file-earmark-text-fill" style="color:var(--gold);font-size:1.1rem"></i>
+        </div>
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:.5rem">Payslip Analyzer</h3>
+        <p style="color:var(--text-dim);font-size:.875rem;line-height:1.65;margin-bottom:1rem">
+          Upload your payslip (JPG, PNG, or PDF). OCR extracts the figures and flags any possible discrepancy vs our estimate.
+        </p>
+        <a href="/analyzer" style="color:var(--gold);text-decoration:none;font-size:.85rem;font-weight:600">
+          Analyze payslip <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card-l h-100">
+        <div style="width:42px;height:42px;background:rgba(212,160,23,.12);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:1.1rem">
+          <i class="bi bi-trash3-fill" style="color:var(--gold);font-size:1.1rem"></i>
+        </div>
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:.5rem">Scrub Your Data</h3>
+        <p style="color:var(--text-dim);font-size:.875rem;line-height:1.65;margin-bottom:1rem">
+          Generate a random session token before calculating. Use it anytime to permanently delete every saved result — no questions asked.
+        </p>
+        <a href="/calculator#privacy" style="color:var(--gold);text-decoration:none;font-size:.85rem;font-weight:600">
+          Learn more <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Disclaimer ───────────────────────────────────────── -->
+  <div class="note-disclaimer">
+    <i class="bi bi-shield-check"></i>
+    <div>
+      <strong style="color:var(--text-dim)">Legal Disclaimer:</strong>
+      TaxLens provides estimates based on simplified progressive PAYE bands and does not represent
+      official ZIMRA calculations. Results may differ from actual deductions due to individual
+      circumstances, employer policies, or pension contributions. This tool is not affiliated with,
+      endorsed by, or connected to ZIMRA or the Government of Zimbabwe.
+      Always consult a qualified tax professional for official guidance.
+    </div>
+  </div>
+
+</div>
+{% endblock %}

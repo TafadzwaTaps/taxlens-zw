@@ -1,0 +1,318 @@
+/* ══════════════════════════════════════════════════════
+   TaxLens Zimbabwe — Custom Stylesheet
+   Loaded after Bootstrap 5 to override and extend.
+   ══════════════════════════════════════════════════════ */
+
+/* ── Design tokens ─────────────────────────────────── */
+:root {
+  --gold:        #D4A017;
+  --gold-light:  #F0C842;
+  --green:       #4CAF50;
+  --red:         #FF6B6B;
+  --dark:        #0D0F0E;
+  --surface:     #141714;
+  --card:        #1C201C;
+  --border:      #2A2E2A;
+  --muted:       #7A8A7A;
+  --text:        #E8EDE8;
+  --text-dim:    #A8B5A8;
+  --radius:      10px;
+  --font-d:      'Syne', sans-serif;
+  --font-b:      'DM Sans', sans-serif;
+  --font-m:      'DM Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; }
+
+body {
+  font-family: var(--font-b);
+  background: var(--dark);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 15px;
+}
+
+/* ── Navbar ─────────────────────────────────────────── */
+.tl-nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: .85rem 1.5rem;
+}
+.tl-brand {
+  font-family: var(--font-d);
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--gold) !important;
+  letter-spacing: -.02em;
+  text-decoration: none;
+}
+.tl-brand-sub {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: .7rem;
+  display: block;
+  letter-spacing: .09em;
+  font-family: var(--font-m);
+  margin-top: -2px;
+}
+.tl-nav .nav-link {
+  color: var(--text-dim) !important;
+  font-size: .875rem;
+  font-weight: 500;
+  padding: .4rem .85rem !important;
+  border-radius: 6px;
+  transition: all .15s;
+}
+.tl-nav .nav-link:hover,
+.tl-nav .nav-link.active {
+  color: var(--text) !important;
+  background: var(--border);
+}
+.tl-nav .nav-link.active { color: var(--gold) !important; }
+
+/* ── Cards ──────────────────────────────────────────── */
+.card-l {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+}
+.card-sm {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+}
+
+/* ── Typography ─────────────────────────────────────── */
+h1, h2, h3, h4 { font-family: var(--font-d); }
+
+.tag {
+  font-family: var(--font-m);
+  font-size: .7rem;
+  color: var(--gold);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  margin-bottom: .5rem;
+  display: block;
+}
+.lbl {
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  margin-bottom: .4rem;
+  display: block;
+}
+.mono { font-family: var(--font-m); }
+
+/* ── Result numbers ─────────────────────────────────── */
+.r-val { font-family: var(--font-m); font-size: 1.45rem; font-weight: 500; color: var(--gold-light); }
+.r-net { font-family: var(--font-d); font-size: 2.1rem; font-weight: 700; color: var(--green); }
+
+/* ── Buttons ────────────────────────────────────────── */
+.btn-gold {
+  background: var(--gold);
+  color: var(--dark);
+  font-family: var(--font-d);
+  font-weight: 700;
+  border: none;
+  border-radius: 7px;
+  padding: .6rem 1.75rem;
+  font-size: .9rem;
+  transition: background .15s;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+.btn-gold:hover { background: var(--gold-light); }
+.btn-gold:disabled { opacity: .5; cursor: not-allowed; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: .55rem 1.25rem;
+  font-size: .875rem;
+  cursor: pointer;
+  transition: all .15s;
+  display: inline-flex;
+  align-items: center;
+}
+.btn-ghost:hover { border-color: var(--gold); color: var(--text); }
+
+.btn-danger {
+  background: rgba(255,107,107,.12);
+  color: var(--red);
+  border: 1px solid rgba(255,107,107,.3);
+  border-radius: 7px;
+  padding: .5rem 1rem;
+  font-size: .82rem;
+  cursor: pointer;
+  transition: all .15s;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.btn-danger:hover { background: rgba(255,107,107,.22); }
+
+/* ── Form controls ──────────────────────────────────── */
+.inp {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 7px;
+  padding: .65rem 1rem;
+  font-family: var(--font-m);
+  font-size: .95rem;
+  width: 100%;
+  transition: border-color .15s;
+}
+.inp:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212,160,23,.12);
+}
+select.inp option { background: var(--surface); }
+
+.inp-wrap { position: relative; }
+.inp-prefix {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-family: var(--font-m);
+  pointer-events: none;
+  z-index: 1;
+}
+.inp-wrap .inp { padding-left: 2rem; }
+
+/* ── Flag badges ────────────────────────────────────── */
+.badge-ok, .badge-over, .badge-under, .badge-none {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .35rem .9rem;
+  border-radius: 20px;
+  font-size: .82rem;
+  font-weight: 600;
+  font-family: var(--font-d);
+}
+.badge-ok    { background: rgba(76,175,80,.15);   color: var(--green);      border: 1px solid rgba(76,175,80,.3);   }
+.badge-over  { background: rgba(255,107,107,.15); color: var(--red);        border: 1px solid rgba(255,107,107,.3); }
+.badge-under { background: rgba(240,200,66,.12);  color: var(--gold-light); border: 1px solid rgba(240,200,66,.3);  }
+.badge-none  { background: rgba(122,138,122,.12); color: var(--muted);      border: 1px solid var(--border);        }
+
+/* ── Tax bar ────────────────────────────────────────── */
+.bar-track { background: var(--border); border-radius: 4px; height: 7px; overflow: hidden; }
+.bar-fill  {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  border-radius: 4px;
+  width: 0%;
+  transition: width .7s cubic-bezier(.4,0,.2,1);
+}
+
+/* ── Notice boxes ───────────────────────────────────── */
+.note-disclaimer {
+  background: rgba(212,160,23,.07);
+  border: 1px solid rgba(212,160,23,.18);
+  border-radius: 7px;
+  padding: .75rem 1rem;
+  font-size: .8rem;
+  color: var(--muted);
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+}
+.note-disclaimer i { color: var(--gold); flex-shrink: 0; margin-top: 1px; }
+
+.note-privacy {
+  background: rgba(76,175,80,.06);
+  border: 1px solid rgba(76,175,80,.2);
+  border-radius: 7px;
+  padding: .7rem 1rem;
+  font-size: .8rem;
+  color: #7BC47E;
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+}
+.note-privacy i { flex-shrink: 0; margin-top: 1px; }
+
+.note-error {
+  background: rgba(255,107,107,.1);
+  border: 1px solid rgba(255,107,107,.3);
+  border-radius: 7px;
+  padding: .7rem 1rem;
+  font-size: .82rem;
+  color: var(--red);
+}
+
+.note-token {
+  background: rgba(212,160,23,.06);
+  border: 1px solid rgba(212,160,23,.2);
+  border-radius: 8px;
+  padding: .9rem 1rem;
+}
+
+/* ── Upload zone ────────────────────────────────────── */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+}
+.upload-zone:hover,
+.upload-zone.drag {
+  border-color: var(--gold);
+  background: rgba(212,160,23,.04);
+}
+.upload-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Spinner ────────────────────────────────────────── */
+.spin {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Divider ────────────────────────────────────────── */
+.hr { height: 1px; background: var(--border); margin: 1.5rem 0; }
+
+/* ── Footer ─────────────────────────────────────────── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 1.5rem;
+  text-align: center;
+  font-size: .78rem;
+  color: var(--muted);
+}
+
+/* ── Tax band table ─────────────────────────────────── */
+.band-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+.band-table th { color: var(--muted); padding: .35rem 0; text-align: left; }
+.band-table td { color: var(--text-dim); padding: .4rem 0; border-top: 1px solid var(--border); }
+.band-table td:last-child { text-align: right; font-family: var(--font-m); }
+
+/* ── Utility ────────────────────────────────────────── */
+.hidden { display: none !important; }

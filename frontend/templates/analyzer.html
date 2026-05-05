@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+{% set active_page = "analyzer" %}
+{% block title %}Payslip Analyzer — TaxLens Zimbabwe{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+  <div class="row g-5">
+
+    <!-- ══ LEFT: Upload ══════════════════════════════════ -->
+    <div class="col-lg-5">
+      <span class="tag">Payslip Analyzer</span>
+      <h1 style="font-size:1.85rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem">
+        Check Your Deductions
+      </h1>
+      <p style="color:var(--text-dim);font-size:.9rem;line-height:1.65;margin-bottom:1.5rem">
+        Upload your payslip. We extract the figures using OCR and compare them to
+        our PAYE estimate. <strong style="color:var(--text-dim)">Your file is never stored</strong>
+        — processed in memory and discarded immediately.
+      </p>
+
+      <div class="note-privacy mb-4">
+        <i class="bi bi-shield-lock-fill"></i>
+        <div>
+          Payslip file is processed server-side in memory only.
+          No file content, filename, or employer details are ever saved to our database.
+        </div>
+      </div>
+
+      <div class="card-l">
+
+        <!-- Upload zone -->
+        <span class="lbl">Upload Payslip</span>
+        <div class="upload-zone" id="zone">
+          <input type="file" id="file-inp" accept=".jpg,.jpeg,.png,.pdf"
+                 onchange="onFile(this)" />
+          <div id="idle-state">
+            <div style="font-size:2.5rem;color:var(--muted);margin-bottom:.75rem">
+              <i class="bi bi-cloud-arrow-up"></i>
+            </div>
+            <p style="color:var(--text-dim);font-size:.9rem;margin-bottom:.25rem">
+              <strong>Click to upload</strong> or drag &amp; drop
+            </p>
+            <p style="color:var(--muted);font-size:.78rem">JPG, PNG, or PDF · Max 10MB</p>
+          </div>
+          <div id="selected-state" class="hidden">
+            <div style="font-size:2rem;color:var(--gold);margin-bottom:.5rem">
+              <i class="bi bi-file-earmark-check"></i>
+            </div>
+            <p id="fname" style="color:var(--text);font-size:.85rem;font-weight:600;margin-bottom:.2rem"></p>
+            <p style="color:var(--muted);font-size:.75rem">Click to change file</p>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- Privacy token -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="lbl" style="margin-bottom:0">
+            Privacy Token
+            <span style="color:var(--muted);font-size:.72rem">(optional)</span>
+          </span>
+          <button class="btn-ghost" style="padding:.28rem .65rem;font-size:.75rem" onclick="genToken()">
+            <i class="bi bi-shuffle me-1"></i>Generate
+          </button>
+        </div>
+        <input type="text" id="token" class="inp" placeholder="Optional — enables data deletion later" />
+        <p style="font-size:.75rem;color:var(--muted);margin-top:.4rem;line-height:1.5">
+          If set, we save only the anonymised numeric result — no file content or personal details.
+        </p>
+
+        <button class="btn-gold w-100 mt-4" id="analyze-btn" onclick="doAnalyze()" disabled>
+          <i class="bi bi-search me-2"></i>Analyze Payslip
+        </button>
+
+        <div id="analyze-err" class="note-error mt-3 hidden"></div>
+      </div>
+
+      <!-- OCR tips -->
+      <div class="mt-4">
+        <span class="tag">Tips for Best Results</span>
+        <div class="card-sm">
+          <ul style="list-style:none;padding:0;margin:0;font-size:.82rem;color:var(--text-dim)">
+            <li style="padding:.4rem 0;border-bottom:1px solid var(--border)">
+              <i class="bi bi-check2 me-2" style="color:var(--gold)"></i>
+              Use a high-resolution scan (300 dpi or higher)
+            </li>
+            <li style="padding:.4rem 0;border-bottom:1px solid var(--border)">
+              <i class="bi bi-check2 me-2" style="color:var(--gold)"></i>
+              Digital PDFs give much better results than photographed payslips
+            </li>
+            <li style="padding:.4rem 0;border-bottom:1px solid var(--border)">
+              <i class="bi bi-check2 me-2" style="color:var(--gold)"></i>
+              Ensure text is sharp, level, and not in shadow
+            </li>
+            <li style="padding:.4rem 0">
+              <i class="bi bi-check2 me-2" style="color:var(--gold)"></i>
+              Fields should be labelled: "Gross Salary", "PAYE", "Net Pay"
+            </li>
+          </ul>
+          <p style="font-size:.75rem;color:var(--muted);margin-top:.75rem;margin-bottom:0">
+            If OCR struggles, use the
+            <a href="/calculator" style="color:var(--gold)">manual calculator</a> instead.
+          </p>
+        </div>
+      </div>
+
+      <!-- Delete my data -->
+      <div class="mt-4">
+        <span class="tag">Delete My Data</span>
+        <div class="card-sm">
+          <p style="font-size:.83rem;color:var(--text-dim);line-height:1.6;margin-bottom:.9rem">
+            Enter your token to permanently delete all records we stored for you.
+          </p>
+          <div class="d-flex gap-2">
+            <input type="text" id="scrub-token" class="inp" placeholder="Session token" />
+            <button class="btn-danger" onclick="doScrub()">
+              <i class="bi bi-trash3 me-1"></i>Delete
+            </button>
+          </div>
+          <div id="scrub-msg" class="mt-2 hidden" style="font-size:.82rem"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ RIGHT: Results ════════════════════════════════ -->
+    <div class="col-lg-7">
+
+      <!-- Placeholder -->
+      <div id="ph" class="card-l text-center py-5">
+        <i class="bi bi-file-earmark-text" style="font-size:3rem;color:var(--border)"></i>
+        <p style="color:var(--muted);margin-top:1rem;font-size:.9rem">
+          Upload a payslip to see the analysis.
+        </p>
+      </div>
+
+      <!-- Loading -->
+      <div id="loading" class="card-l text-center py-5 hidden">
+        <div class="spin mx-auto" style="width:32px;height:32px;border-width:3px"></div>
+        <p style="color:var(--muted);margin-top:1.25rem;font-size:.9rem">Running OCR and calculating…</p>
+        <p style="color:var(--muted);font-size:.78rem;margin-top:.25rem">Usually takes 5–15 seconds</p>
+      </div>
+
+      <!-- Analysis results -->
+      <div id="analysis" class="hidden">
+
+        <!-- Flag + difference -->
+        <div class="card-l mb-4">
+          <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-3">
+            <div>
+              <span class="lbl mb-1">Analysis Verdict</span>
+              <div id="flag-badge"></div>
+            </div>
+            <div class="text-end">
+              <span class="lbl">PAYE Difference</span>
+              <div style="font-family:var(--font-m);font-size:1.4rem;font-weight:600"
+                   id="diff-val">—</div>
+            </div>
+          </div>
+          <!-- Explanation -->
+          <div style="background:var(--surface);border-radius:7px;padding:.85rem 1rem;font-size:.85rem;color:var(--text-dim);line-height:1.65">
+            <i class="bi bi-info-circle me-2" style="color:var(--gold)"></i>
+            <span id="explain"></span>
+          </div>
+        </div>
+
+        <!-- Side-by-side comparison -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="card-sm h-100">
+              <span class="tag mb-3">Extracted from Payslip</span>
+              <div class="mb-2"><span class="lbl">Gross Salary</span><div class="mono" id="ex-gross">—</div></div>
+              <div class="mb-2"><span class="lbl">PAYE</span><div class="mono" style="color:var(--red)" id="ex-paye">—</div></div>
+              <div class="mb-2"><span class="lbl">AIDS Levy</span><div class="mono" id="ex-aids">—</div></div>
+              <div class="mb-2"><span class="lbl">Total Deductions</span><div class="mono" id="ex-deduct">—</div></div>
+              <div><span class="lbl">Net Pay</span><div class="mono" style="color:var(--green)" id="ex-net">—</div></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card-sm h-100">
+              <span class="tag mb-3">Our Estimate</span>
+              <div class="mb-2"><span class="lbl">Gross Salary</span><div class="mono" id="est-gross">—</div></div>
+              <div class="mb-2"><span class="lbl">PAYE</span><div class="mono" style="color:var(--red)" id="est-paye">—</div></div>
+              <div class="mb-2"><span class="lbl">AIDS Levy</span><div class="mono" id="est-aids">—</div></div>
+              <div class="mb-2"><span class="lbl">Total Tax</span><div class="mono" id="est-total">—</div></div>
+              <div><span class="lbl">Net Pay</span><div class="mono" style="color:var(--green)" id="est-net">—</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Token box -->
+        <div id="a-token-box" class="note-token mb-4 hidden">
+          <span class="lbl" style="color:var(--gold)">Session Token (result saved)</span>
+          <div class="d-flex align-items-center gap-2 mt-1">
+            <span class="mono" style="font-size:.85rem;word-break:break-all;flex:1"
+                  id="a-token-val"></span>
+            <button class="btn-ghost" style="padding:.3rem .65rem;font-size:.75rem"
+                    onclick="copyAToken()">
+              <i class="bi bi-clipboard"></i>
+            </button>
+          </div>
+          <p style="font-size:.75rem;color:var(--muted);margin-top:.4rem;margin-bottom:0">
+            Use this token to delete this record via the <strong style="color:var(--text-dim)">Delete My Data</strong> panel.
+          </p>
+        </div>
+
+        <!-- Raw OCR toggle -->
+        <div class="mb-4">
+          <button onclick="toggleOcr(this)"
+                  style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:.7rem 1rem;color:var(--text-dim);cursor:pointer;font-size:.85rem;display:flex;justify-content:space-between;align-items:center;text-align:left">
+            <span><i class="bi bi-eye me-2" style="color:var(--gold)"></i>View raw OCR text</span>
+            <i class="bi bi-chevron-down" id="ocr-chev"></i>
+          </button>
+          <div id="ocr-box" class="hidden mt-2"
+               style="background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:1rem;font-family:var(--font-m);font-size:.75rem;color:var(--muted);white-space:pre-wrap;word-break:break-word;max-height:200px;overflow-y:auto"></div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="note-disclaimer">
+          <i class="bi bi-shield-check"></i>
+          <span id="a-disclaimer"></span>
+        </div>
+
+      </div><!-- /analysis -->
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ── Drag-and-drop ───────────────────────────────────────
+  const zone = document.getElementById('zone');
+  zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', ()  => zone.classList.remove('drag'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag');
+    if (e.dataTransfer.files[0]) {
+      document.getElementById('file-inp').files = e.dataTransfer.files;
+      onFile(document.getElementById('file-inp'));
+    }
+  });
+
+  function onFile(inp) {
+    if (!inp.files?.[0]) return;
+    document.getElementById('idle-state').classList.add('hidden');
+    document.getElementById('selected-state').classList.remove('hidden');
+    document.getElementById('fname').textContent =
+      inp.files[0].name + ' · ' + (inp.files[0].size / 1024).toFixed(0) + ' KB';
+    document.getElementById('analyze-btn').disabled = false;
+  }
+
+  function genToken() {
+    const bytes = crypto.getRandomValues(new Uint8Array(18));
+    document.getElementById('token').value =
+      Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  // ── Formatters ──────────────────────────────────────────
+  function fmt(v) {
+    if (v == null) return '—';
+    return '$' + parseFloat(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+
+  function fmtDiff(v) {
+    if (v == null) return '<span style="color:var(--muted)">—</span>';
+    const sign  = v >= 0 ? '+' : '';
+    const color = Math.abs(v) <= 5 ? 'var(--green)' : v > 0 ? 'var(--red)' : 'var(--gold-light)';
+    return `<span style="color:${color}">${sign}${fmt(v)}</span>`;
+  }
+
+  function flagBadge(flag) {
+    const f = flag.toLowerCase();
+    if (f === 'ok')              return `<span class="badge-ok"><i class="bi bi-check-circle-fill"></i>${flag}</span>`;
+    if (f.includes('over'))      return `<span class="badge-over"><i class="bi bi-exclamation-triangle-fill"></i>${flag}</span>`;
+    if (f.includes('under'))     return `<span class="badge-under"><i class="bi bi-dash-circle-fill"></i>${flag}</span>`;
+    return `<span class="badge-none">${flag}</span>`;
+  }
+
+  function toggleOcr(btn) {
+    document.getElementById('ocr-box').classList.toggle('hidden');
+    document.getElementById('ocr-chev').classList.toggle('bi-chevron-down');
+    document.getElementById('ocr-chev').classList.toggle('bi-chevron-up');
+  }
+
+  function copyAToken() {
+    const t = document.getElementById('a-token-val').textContent;
+    navigator.clipboard.writeText(t);
+    document.getElementById('scrub-token').value = t;
+  }
+
+  // ── Analyze ─────────────────────────────────────────────
+  async function doAnalyze() {
+    const inp   = document.getElementById('file-inp');
+    const token = document.getElementById('token').value.trim() || null;
+    const btn   = document.getElementById('analyze-btn');
+    const err   = document.getElementById('analyze-err');
+    err.classList.add('hidden');
+
+    if (!inp.files?.[0]) {
+      err.textContent = 'Please select a file first.';
+      err.classList.remove('hidden');
+      return;
+    }
+
+    document.getElementById('ph').classList.add('hidden');
+    document.getElementById('analysis').classList.add('hidden');
+    document.getElementById('loading').classList.remove('hidden');
+    btn.innerHTML = '<span class="spin me-2"></span>Analyzing…';
+    btn.disabled  = true;
+
+    const fd = new FormData();
+    fd.append('file', inp.files[0]);
+    if (token) fd.append('session_token', token);
+
+    try {
+      const res = await fetch('/api/analyze-payslip', { method: 'POST', body: fd });
+      const d   = await res.json();
+      if (!res.ok) throw new Error(d.detail || 'API error');
+
+      const ex  = d.extracted_values;
+      const est = d.expected_values;
+
+      document.getElementById('ex-gross').textContent  = fmt(ex.gross_salary);
+      document.getElementById('ex-paye').textContent   = fmt(ex.paye);
+      document.getElementById('ex-aids').textContent   = fmt(ex.aids_levy);
+      document.getElementById('ex-deduct').textContent = fmt(ex.total_deductions);
+      document.getElementById('ex-net').textContent    = fmt(ex.net_salary);
+
+      if (est) {
+        document.getElementById('est-gross').textContent = fmt(est.gross_salary);
+        document.getElementById('est-paye').textContent  = fmt(est.paye_tax);
+        document.getElementById('est-aids').textContent  = fmt(est.aids_levy);
+        document.getElementById('est-total').textContent = fmt(est.total_tax);
+        document.getElementById('est-net').textContent   = fmt(est.net_salary);
+      }
+
+      document.getElementById('flag-badge').innerHTML    = flagBadge(d.flag);
+      document.getElementById('diff-val').innerHTML      = fmtDiff(d.difference);
+      document.getElementById('explain').textContent     = d.explanation;
+      document.getElementById('a-disclaimer').textContent = d.disclaimer;
+      document.getElementById('ocr-box').textContent     = ex.raw_text_snippet || 'No text extracted.';
+
+      if (token) {
+        document.getElementById('a-token-val').textContent = token;
+        document.getElementById('a-token-box').classList.remove('hidden');
+      }
+
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('analysis').classList.remove('hidden');
+
+    } catch (e) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('ph').classList.remove('hidden');
+      err.textContent = 'Error: ' + e.message;
+      err.classList.remove('hidden');
+    } finally {
+      btn.innerHTML = '<i class="bi bi-search me-2"></i>Analyze Payslip';
+      btn.disabled  = false;
+    }
+  }
+
+  // ── Scrub ───────────────────────────────────────────────
+  async function doScrub() {
+    const token = document.getElementById('scrub-token').value.trim();
+    const msg   = document.getElementById('scrub-msg');
+    if (!token) {
+      msg.textContent = 'Enter your session token first.';
+      msg.style.color = 'var(--red)';
+      msg.classList.remove('hidden');
+      return;
+    }
+    try {
+      const res = await fetch('/api/scrub', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_token: token })
+      });
+      const d = await res.json();
+      msg.textContent = d.message;
+      msg.style.color = d.deleted_count > 0 ? 'var(--green)' : 'var(--muted)';
+      msg.classList.remove('hidden');
+    } catch (e) {
+      msg.textContent = 'Error: ' + e.message;
+      msg.style.color = 'var(--red)';
+      msg.classList.remove('hidden');
+    }
+  }
+</script>
+{% endblock %}

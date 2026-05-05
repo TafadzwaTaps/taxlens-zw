@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}TaxLens Zimbabwe{% endblock %}</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <!-- TaxLens styles -->
+  <link href="/static/style.css" rel="stylesheet" />
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- ── Navbar ──────────────────────────────────────────── -->
+<nav class="tl-nav navbar navbar-expand-md">
+  <div class="container-xl">
+    <a class="tl-brand" href="/">
+      TaxLens
+      <span class="tl-brand-sub">ZIMBABWE · FOR THE PEOPLE</span>
+    </a>
+
+    <button class="navbar-toggler border-0" type="button"
+            data-bs-toggle="collapse" data-bs-target="#tlnav"
+            style="color:var(--text-dim)">
+      <i class="bi bi-list fs-5"></i>
+    </button>
+
+    <div class="collapse navbar-collapse" id="tlnav">
+      <ul class="navbar-nav ms-auto gap-1">
+        <li class="nav-item">
+          <a class="nav-link {% if active_page == 'home' %}active{% endif %}" href="/">
+            <i class="bi bi-house me-1"></i>Home
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if active_page == 'calculator' %}active{% endif %}" href="/calculator">
+            <i class="bi bi-calculator me-1"></i>Calculator
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if active_page == 'analyzer' %}active{% endif %}" href="/analyzer">
+            <i class="bi bi-file-earmark-text me-1"></i>Payslip Analyzer
+          </a>
+        </li>
+        <li class="nav-item ms-md-2">
+          <a class="nav-link" href="/docs" target="_blank">
+            <i class="bi bi-braces me-1"></i>API
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Page content ────────────────────────────────────── -->
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ── Footer ──────────────────────────────────────────── -->
+<footer>
+  <div class="container-xl">
+    <strong style="color:var(--text-dim)">TaxLens Zimbabwe</strong>
+    &nbsp;·&nbsp; Estimates only — not affiliated with ZIMRA
+    &nbsp;·&nbsp; Built for Zimbabwean employees
+    &nbsp;·&nbsp;
+    <a href="/docs" style="color:var(--gold);text-decoration:none">API Docs</a>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

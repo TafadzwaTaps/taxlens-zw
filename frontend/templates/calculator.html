@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+{% set active_page = "calculator" %}
+{% block title %}PAYE Calculator — TaxLens Zimbabwe{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+  <div class="row g-5">
+
+    <!-- ══ LEFT: Inputs ══════════════════════════════════ -->
+    <div class="col-lg-5">
+      <span class="tag">PAYE Calculator</span>
+      <h1 style="font-size:1.85rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem">
+        Estimate Your Tax
+      </h1>
+      <p style="color:var(--text-dim);font-size:.9rem;line-height:1.65;margin-bottom:1.75rem">
+        Enter your gross monthly salary. Your salary figure is
+        <strong style="color:var(--text-dim)">never stored</strong> — only anonymised
+        tax results are saved if you opt in with a session token.
+      </p>
+
+      <div class="card-l">
+
+        <!-- Salary input -->
+        <div class="mb-4">
+          <label class="lbl" for="salary">Gross Monthly Salary</label>
+          <div class="inp-wrap">
+            <span class="inp-prefix" id="sym">$</span>
+            <input type="number" id="salary" class="inp" placeholder="0.00"
+                   min="1" step="0.01" />
+          </div>
+        </div>
+
+        <!-- Currency select -->
+        <div class="mb-4">
+          <label class="lbl" for="currency">Currency</label>
+          <select id="currency" class="inp"
+                  onchange="document.getElementById('sym').textContent = this.value === 'USD' ? '$' : 'Z'">
+            <option value="USD">USD — US Dollar</option>
+            <option value="ZiG">ZiG — Zimbabwe Gold</option>
+          </select>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- Privacy token -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="lbl" style="margin-bottom:0">
+            Privacy Token
+            <span style="color:var(--muted);font-weight:400;font-size:.72rem">(optional)</span>
+          </span>
+          <button class="btn-ghost" style="padding:.28rem .65rem;font-size:.75rem" onclick="genToken()">
+            <i class="bi bi-shuffle me-1"></i>Generate
+          </button>
+        </div>
+        <input type="text" id="token" class="inp" placeholder="Leave blank to save nothing" />
+        <p style="font-size:.75rem;color:var(--muted);margin-top:.45rem;line-height:1.5">
+          If set, we save only your anonymised tax numbers — not your salary.
+          Use the same token in <strong style="color:var(--text-dim)">Delete My Data</strong> below to wipe everything permanently.
+        </p>
+
+        <button class="btn-gold w-100 mt-4" id="calc-btn" onclick="doCalc()">
+          <i class="bi bi-calculator me-2"></i>Calculate PAYE
+        </button>
+
+        <div id="calc-err" class="note-error mt-3 hidden"></div>
+      </div>
+
+      <!-- Tax bands reference -->
+      <div class="mt-4">
+        <span class="tag">USD Monthly Tax Bands (Illustrative)</span>
+        <div class="card-sm">
+          <table class="band-table">
+            <thead>
+              <tr><th>Income Range</th><th style="text-align:right">Rate</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Up to $300</td><td>0%</td></tr>
+              <tr><td>$301 – $700</td><td>20%</td></tr>
+              <tr><td>$701 – $1,500</td><td>25%</td></tr>
+              <tr><td>$1,501 – $3,000</td><td>30%</td></tr>
+              <tr><td>Above $3,000</td><td>35%</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:.72rem;color:var(--muted);margin-top:.75rem;margin-bottom:0">
+            AIDS Levy: 3% of PAYE &nbsp;·&nbsp; Bands are estimates only
+          </p>
+        </div>
+      </div>
+
+      <!-- Delete my data -->
+      <div class="mt-4" id="privacy">
+        <span class="tag">Delete My Data</span>
+        <div class="card-sm">
+          <p style="font-size:.83rem;color:var(--text-dim);line-height:1.6;margin-bottom:.9rem">
+            Enter your session token to permanently delete all records we stored for you.
+            This cannot be undone.
+          </p>
+          <div class="d-flex gap-2">
+            <input type="text" id="scrub-token" class="inp" placeholder="Your session token" />
+            <button class="btn-danger" onclick="doScrub()">
+              <i class="bi bi-trash3 me-1"></i>Delete
+            </button>
+          </div>
+          <div id="scrub-msg" class="mt-2 hidden" style="font-size:.82rem"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ RIGHT: Results ════════════════════════════════ -->
+    <div class="col-lg-7">
+
+      <!-- Placeholder -->
+      <div id="results-ph" class="card-l text-center py-5">
+        <i class="bi bi-calculator" style="font-size:3rem;color:var(--border)"></i>
+        <p style="color:var(--muted);margin-top:1rem;font-size:.9rem">
+          Enter a salary and hit <strong>Calculate PAYE</strong> to see your breakdown.
+        </p>
+      </div>
+
+      <!-- Results panel -->
+      <div id="results" class="hidden">
+
+        <!-- Net pay hero -->
+        <div class="card-l mb-4"
+             style="background:linear-gradient(135deg,var(--card),rgba(76,175,80,.04));border-color:rgba(76,175,80,.18)">
+          <div class="row align-items-center mb-3">
+            <div class="col">
+              <span class="lbl" style="color:var(--green)">Net Monthly Pay</span>
+              <div class="r-net" id="r-net">—</div>
+              <div style="font-size:.78rem;color:var(--muted);margin-top:.25rem" id="r-band">—</div>
+            </div>
+            <div class="col-auto text-end">
+              <span class="lbl">Effective Rate</span>
+              <div style="font-size:1.9rem;font-family:var(--font-d);font-weight:700;color:var(--gold-light)"
+                   id="r-rate">—</div>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between mb-1"
+               style="font-size:.75rem;color:var(--muted)">
+            <span>Tax portion</span>
+            <span id="r-bar-lbl">—</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill" id="r-bar"></div></div>
+        </div>
+
+        <!-- Breakdown row -->
+        <div class="row g-3 mb-3">
+          <div class="col-4">
+            <div class="card-sm h-100">
+              <span class="lbl">Gross</span>
+              <div class="r-val" id="r-gross">—</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="card-sm h-100">
+              <span class="lbl">PAYE</span>
+              <div class="r-val" style="color:var(--red)" id="r-paye">—</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="card-sm h-100">
+              <span class="lbl">AIDS Levy</span>
+              <div class="r-val" style="color:var(--red)" id="r-aids">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total + annual row -->
+        <div class="card-sm mb-3 d-flex justify-content-between align-items-center">
+          <div>
+            <span class="lbl">Total Deductions</span>
+            <div class="mono" style="font-size:1.05rem" id="r-total">—</div>
+          </div>
+          <div class="text-end">
+            <span class="lbl">Annual Tax</span>
+            <div class="mono" style="font-size:1.05rem;color:var(--red)" id="r-ann">—</div>
+          </div>
+        </div>
+
+        <!-- Token confirmation -->
+        <div id="r-token-box" class="note-token mb-3 hidden">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+              <span class="lbl" style="color:var(--gold)">Your Session Token (saved)</span>
+              <div class="mono" style="font-size:.85rem;word-break:break-all" id="r-token-val">—</div>
+            </div>
+            <button class="btn-ghost" style="padding:.3rem .7rem;font-size:.75rem" onclick="copyToken()">
+              <i class="bi bi-clipboard me-1"></i>Copy
+            </button>
+          </div>
+          <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem;margin-bottom:0">
+            Save this token. Paste it into <strong style="color:var(--text-dim)">Delete My Data</strong> to scrub your record.
+          </p>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="note-disclaimer">
+          <i class="bi bi-shield-check"></i>
+          <span id="r-disclaimer"></span>
+        </div>
+
+      </div><!-- /results -->
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // ── Token generator ─────────────────────────────────────
+  function genToken() {
+    const bytes = crypto.getRandomValues(new Uint8Array(18));
+    document.getElementById('token').value =
+      Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  // ── Formatter ───────────────────────────────────────────
+  function fmt(v, cur) {
+    if (v == null) return '—';
+    const n = parseFloat(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+    return cur === 'ZiG' ? 'ZiG ' + n : '$' + n;
+  }
+
+  // ── Calculate ───────────────────────────────────────────
+  async function doCalc() {
+    const salary   = parseFloat(document.getElementById('salary').value);
+    const currency = document.getElementById('currency').value;
+    const token    = document.getElementById('token').value.trim() || null;
+    const btn      = document.getElementById('calc-btn');
+    const err      = document.getElementById('calc-err');
+    err.classList.add('hidden');
+
+    if (!salary || salary <= 0) {
+      err.textContent = 'Please enter a valid positive salary.';
+      err.classList.remove('hidden');
+      return;
+    }
+
+    btn.innerHTML = '<span class="spin me-2"></span>Calculating…';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch('/api/calculate-tax', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ salary, currency, session_token: token })
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.detail || 'API error');
+
+      document.getElementById('r-gross').textContent   = fmt(d.gross_salary, currency);
+      document.getElementById('r-paye').textContent    = fmt(d.paye_tax, currency);
+      document.getElementById('r-aids').textContent    = fmt(d.aids_levy, currency);
+      document.getElementById('r-total').textContent   = fmt(d.total_tax, currency);
+      document.getElementById('r-net').textContent     = fmt(d.net_salary, currency);
+      document.getElementById('r-rate').textContent    = d.effective_rate + '%';
+      document.getElementById('r-band').textContent    = 'Band: ' + d.tax_band;
+      document.getElementById('r-bar').style.width     = Math.min(d.effective_rate * 2.5, 100) + '%';
+      document.getElementById('r-bar-lbl').textContent = d.effective_rate + '%';
+      document.getElementById('r-ann').textContent     = fmt(d.total_tax * 12, currency);
+      document.getElementById('r-disclaimer').textContent = d.disclaimer;
+
+      if (token) {
+        document.getElementById('r-token-val').textContent = token;
+        document.getElementById('r-token-box').classList.remove('hidden');
+      } else {
+        document.getElementById('r-token-box').classList.add('hidden');
+      }
+
+      document.getElementById('results-ph').classList.add('hidden');
+      document.getElementById('results').classList.remove('hidden');
+
+    } catch (e) {
+      err.textContent = 'Error: ' + e.message;
+      err.classList.remove('hidden');
+    } finally {
+      btn.innerHTML = '<i class="bi bi-calculator me-2"></i>Calculate PAYE';
+      btn.disabled = false;
+    }
+  }
+
+  // ── Copy token → also prefills scrub field ──────────────
+  function copyToken() {
+    const t = document.getElementById('r-token-val').textContent;
+    navigator.clipboard.writeText(t);
+    document.getElementById('scrub-token').value = t;
+  }
+
+  // ── Scrub ───────────────────────────────────────────────
+  async function doScrub() {
+    const token = document.getElementById('scrub-token').value.trim();
+    const msg   = document.getElementById('scrub-msg');
+    if (!token) {
+      msg.textContent = 'Enter your session token first.';
+      msg.style.color = 'var(--red)';
+      msg.classList.remove('hidden');
+      return;
+    }
+    try {
+      const res = await fetch('/api/scrub', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_token: token })
+      });
+      const d = await res.json();
+      msg.textContent = d.message;
+      msg.style.color = d.deleted_count > 0 ? 'var(--green)' : 'var(--muted)';
+      msg.classList.remove('hidden');
+    } catch (e) {
+      msg.textContent = 'Error: ' + e.message;
+      msg.style.color = 'var(--red)';
+      msg.classList.remove('hidden');
+    }
+  }
+
+  document.getElementById('salary').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doCalc();
+  });
+</script>
+{% endblock %}
