@@ -24,4 +24,3 @@ python-dotenv==1.0.1
 # ── Testing ───────────────────────────────────────────────────
 pytest==8.3.4
 pytest-asyncio==0.24.0
-python-3.11.9
