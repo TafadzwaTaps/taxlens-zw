@@ -11,16 +11,14 @@ services:
 
     buildCommand: "bash build.sh"
     startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
-    #                      ^^^^
-    #                      main:app — matches the flat main.py file in backend/
-    #                      NOT app.main:app (that would need an app/ sub-package)
 
     envVars:
       - key: SUPABASE_URL
         sync: false                      # set manually in Render dashboard
       - key: SUPABASE_SERVICE_KEY
-        sync: false                      # set manually — mark as secret
+        sync: false                      # mark as secret in Render dashboard
       - key: APP_ENV
         value: production
       - key: PYTHON_VERSION
-        value: "3.12.0"
+        value: "3.12.8"                  # explicit patch version — prevents Render
+                                         # defaulting to latest (3.14 breaks Jinja2)

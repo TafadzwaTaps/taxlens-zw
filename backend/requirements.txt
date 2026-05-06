@@ -1,20 +1,26 @@
---only-binary=:all:
+# TaxLens Zimbabwe — Backend Dependencies
+# Hosting: Render.com (Python 3.12) | Database: Supabase
 
-fastapi>=0.115.6
-uvicorn[standard]>=0.32.1
-python-multipart>=0.0.12
-jinja2>=3.1.4
+# ── Web framework ──────────────────────────────────────────────────────────────
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.12
+jinja2==3.1.5          # 3.1.5 fixes the LRU cache TypeError on Python 3.13/3.14
 
-supabase>=2.10.0
-httpx>=0.27.2
+# ── Supabase client ────────────────────────────────────────────────────────────
+supabase==2.10.0
+httpx==0.27.2          # pinned — supabase 2.10.0 requires httpx >=0.27, <0.29
 
-pytesseract>=0.3.13
-Pillow>=12.2.0
-PyMuPDF>=1.25.1
+# ── OCR ────────────────────────────────────────────────────────────────────────
+pytesseract==0.3.13
+Pillow==11.0.0
+PyMuPDF==1.25.1        # PDF → image (fitz)
 
-pydantic>=2.10.0
-pydantic-settings>=2.6.0
-python-dotenv>=1.0.1
-# ── Testing ───────────────────────────────────────────────────
+# ── Config & validation ────────────────────────────────────────────────────────
+pydantic==2.10.3
+pydantic-settings==2.6.1
+python-dotenv==1.0.1
+
+# ── Testing ────────────────────────────────────────────────────────────────────
 pytest==8.3.4
 pytest-asyncio==0.24.0
