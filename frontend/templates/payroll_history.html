@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% set active_page = "payroll" %}
+{% block title %}Payroll History — TaxLens Zimbabwe{% endblock %}
+
+{% block content %}
+<div class="container-xl py-4">
+
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <span class="tag">Records</span>
+      <h1 style="font-size:1.7rem;font-weight:800;letter-spacing:-.03em">Payroll History</h1>
+    </div>
+    <button class="btn-gold" onclick="runPayroll()">
+      <i class="bi bi-play-circle me-2"></i>Run Payroll
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="card-sm mb-4">
+    <div class="row g-3 align-items-end">
+      <div class="col-6 col-md-3">
+        <label class="lbl">Month</label>
+        <select id="f-month" class="inp">
+          <option value="">All months</option>
+          <option value="1">January</option><option value="2">February</option>
+          <option value="3">March</option><option value="4">April</option>
+          <option value="5">May</option><option value="6">June</option>
+          <option value="7">July</option><option value="8">August</option>
+          <option value="9">September</option><option value="10">October</option>
+          <option value="11">November</option><option value="12">December</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="lbl">Year</label>
+        <select id="f-year" class="inp">
+          <option value="">All years</option>
+          <option value="2025">2025</option>
+          <option value="2024">2024</option>
+          <option value="2023">2023</option>
+        </select>
+      </div>
+      <div class="col-8 col-md-4">
+        <label class="lbl">Employee Name</label>
+        <input type="text" id="f-name" class="inp" placeholder="Search by name…" />
+      </div>
+      <div class="col-4 col-md-2">
+        <button class="btn-gold w-100" onclick="loadHistory()">
+          <i class="bi bi-search"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- History table -->
+  <div id="hist-loading" class="text-center py-5">
+    <div class="spin mx-auto" style="width:28px;height:28px;border-width:3px"></div>
+    <p style="color:var(--muted);margin-top:1rem">Loading history…</p>
+  </div>
+
+  <div id="hist-upgrade" class="card-l text-center py-5 hidden">
+    <i class="bi bi-lock" style="font-size:2.5rem;color:var(--border)"></i>
+    <p style="color:var(--muted);margin-top:1rem">Payroll history requires a <strong style="color:var(--gold)">Pro</strong> or <strong style="color:var(--gold)">Accountant</strong> plan.</p>
+    <a href="/api/subscription/plans" target="_blank" class="btn-gold mt-3" style="text-decoration:none;display:inline-block">
+      <i class="bi bi-arrow-up-circle me-2"></i>View Plans
+    </a>
+  </div>
+
+  <div id="hist-empty" class="card-l text-center py-4 hidden">
+    <p style="color:var(--muted)">No payroll records found. Run a payroll or use the calculator to create records.</p>
+  </div>
+
+  <div id="hist-table" class="hidden">
+    <div class="card-l" style="padding:0;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;min-width:600px">
+          <thead>
+            <tr style="background:var(--surface);border-bottom:1px solid var(--border)">
+              <th style="padding:.85rem 1.25rem;text-align:left;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Employee</th>
+              <th style="padding:.85rem 1rem;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Period</th>
+              <th style="padding:.85rem 1rem;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:right">Gross</th>
+              <th style="padding:.85rem 1rem;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:right">PAYE</th>
+              <th style="padding:.85rem 1rem;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:right">NSSA</th>
+              <th style="padding:.85rem 1rem;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:right">Net</th>
+              <th style="padding:.85rem 1rem;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Source</th>
+            </tr>
+          </thead>
+          <tbody id="hist-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Run Payroll Modal -->
+<div id="run-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem">
+  <div class="card-l" style="width:100%;max-width:380px">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem">Run Payroll</h3>
+    <div class="row g-3 mb-4">
+      <div class="col-6">
+        <label class="lbl">Month *</label>
+        <select id="run-month" class="inp">
+          <option value="1">January</option><option value="2">February</option>
+          <option value="3">March</option><option value="4">April</option>
+          <option value="5">May</option><option value="6">June</option>
+          <option value="7">July</option><option value="8">August</option>
+          <option value="9">September</option><option value="10">October</option>
+          <option value="11">November</option><option value="12">December</option>
+        </select>
+      </div>
+      <div class="col-6">
+        <label class="lbl">Year *</label>
+        <input type="number" id="run-year" class="inp" value="2025" min="2020" max="2030" />
+      </div>
+      <div class="col-12">
+        <label class="lbl">Notes</label>
+        <input type="text" id="run-notes" class="inp" placeholder="Optional notes…" />
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn-gold flex-fill" id="run-btn" onclick="submitRun()">
+        <i class="bi bi-play-circle me-2"></i>Run Payroll
+      </button>
+      <button class="btn-ghost" onclick="document.getElementById('run-modal').style.display='none'">Cancel</button>
+    </div>
+    <div id="run-err" class="note-error mt-3 hidden"></div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const token = () => localStorage.getItem('tl_token');
+  const fmt   = v => '$' + parseFloat(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const MONTHS = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  async function loadHistory() {
+    if (!token()) { window.location.href = '/auth/login'; return; }
+    document.getElementById('hist-loading').classList.remove('hidden');
+    ['hist-empty','hist-table','hist-upgrade'].forEach(id => document.getElementById(id).classList.add('hidden'));
+
+    const m    = document.getElementById('f-month').value;
+    const y    = document.getElementById('f-year').value;
+    const name = document.getElementById('f-name').value.trim();
+
+    let url = '/api/payroll/history?limit=100';
+    if (m) url += `&month=${m}`;
+    if (y) url += `&year=${y}`;
+    if (name) url += `&employee_name=${encodeURIComponent(name)}`;
+
+    try {
+      const res = await fetch(url, {headers:{'Authorization':'Bearer '+token()}});
+      if (res.status === 401) { window.location.href = '/auth/login'; return; }
+      if (res.status === 403) {
+        document.getElementById('hist-loading').classList.add('hidden');
+        document.getElementById('hist-upgrade').classList.remove('hidden'); return;
+      }
+      const records = await res.json();
+      document.getElementById('hist-loading').classList.add('hidden');
+
+      if (!records.length) {
+        document.getElementById('hist-empty').classList.remove('hidden'); return;
+      }
+
+      document.getElementById('hist-tbody').innerHTML = records.map(r => `
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:.8rem 1.25rem;font-size:.875rem;font-weight:500">${r.employee_name||'Manual'}</td>
+          <td style="padding:.8rem 1rem;font-size:.85rem;color:var(--text-dim)">${MONTHS[r.period_month]} ${r.period_year}</td>
+          <td style="padding:.8rem 1rem;text-align:right;font-family:var(--font-m);font-size:.85rem">${fmt(r.gross_salary)}</td>
+          <td style="padding:.8rem 1rem;text-align:right;font-family:var(--font-m);font-size:.85rem;color:var(--red)">${fmt(r.paye_tax)}</td>
+          <td style="padding:.8rem 1rem;text-align:right;font-family:var(--font-m);font-size:.85rem;color:var(--gold-light)">${fmt(r.nssa)}</td>
+          <td style="padding:.8rem 1rem;text-align:right;font-family:var(--font-m);font-size:.85rem;color:var(--green)">${fmt(r.net_salary)}</td>
+          <td style="padding:.8rem 1rem;font-size:.75rem;color:var(--muted)">${r.source}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('hist-table').classList.remove('hidden');
+    } catch (e) {
+      document.getElementById('hist-loading').innerHTML = `<p style="color:var(--red)">Error: ${e.message}</p>`;
+    }
+  }
+
+  function runPayroll() {
+    const m = document.getElementById('run-modal');
+    m.style.display = 'flex'; m.classList.remove('hidden');
+  }
+
+  async function submitRun() {
+    const month = parseInt(document.getElementById('run-month').value);
+    const year  = parseInt(document.getElementById('run-year').value);
+    const notes = document.getElementById('run-notes').value.trim() || null;
+    const btn   = document.getElementById('run-btn');
+    const err   = document.getElementById('run-err');
+    err.classList.add('hidden');
+
+    btn.innerHTML = '<span class="spin me-2"></span>Running…';
+    btn.disabled  = true;
+    try {
+      const res = await fetch('/api/payroll/runs', {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token()},
+        body: JSON.stringify({period_month:month, period_year:year, notes})
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.detail || 'Run failed');
+      document.getElementById('run-modal').style.display = 'none';
+      await loadHistory();
+    } catch(e) {
+      err.textContent = e.message; err.classList.remove('hidden');
+    } finally {
+      btn.innerHTML = '<i class="bi bi-play-circle me-2"></i>Run Payroll';
+      btn.disabled  = false;
+    }
+  }
+
+  loadHistory();
+</script>
+{% endblock %}

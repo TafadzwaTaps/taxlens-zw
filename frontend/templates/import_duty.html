@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% set active_page = "import" %}
+{% block title %}Import Duty Calculator — TaxLens Zimbabwe{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+  <div class="row g-5">
+
+    <!-- Left: Inputs -->
+    <div class="col-lg-5">
+      <span class="tag">Zimbabwe Customs</span>
+      <h1 style="font-size:1.85rem;font-weight:800;letter-spacing:-.03em;margin-bottom:.5rem">
+        Import Duty Estimator
+      </h1>
+      <p style="color:var(--text-dim);font-size:.9rem;line-height:1.65;margin-bottom:1.75rem">
+        Estimate the import duties, VAT, and total landed cost for goods imported into Zimbabwe.
+        Rates are illustrative — always verify with a licensed customs agent.
+      </p>
+
+      <div class="card-l">
+        <div class="mb-4">
+          <label class="lbl" for="cat">Product Category</label>
+          <select id="cat" class="inp">
+            <option value="electronics">📱 Electronics &amp; Electrical Appliances</option>
+            <option value="clothing">👗 Clothing &amp; Textiles</option>
+            <option value="vehicle">🚗 Motor Vehicles</option>
+            <option value="furniture">🛋️ Furniture &amp; Household Goods</option>
+            <option value="food">🛒 Food &amp; Beverages</option>
+            <option value="cosmetics">💄 Cosmetics &amp; Personal Care</option>
+            <option value="other">📦 General Goods (other)</option>
+          </select>
+        </div>
+
+        <div class="mb-4">
+          <label class="lbl" for="value">Item Value (USD)</label>
+          <div class="inp-wrap">
+            <span class="inp-prefix">$</span>
+            <input type="number" id="value" class="inp" placeholder="0.00" min="1" step="0.01" />
+          </div>
+          <p style="font-size:.75rem;color:var(--muted);margin-top:.4rem">Enter the purchase/invoice price in USD</p>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-6">
+            <label class="lbl" for="shipping">Shipping Cost (USD)</label>
+            <div class="inp-wrap">
+              <span class="inp-prefix">$</span>
+              <input type="number" id="shipping" class="inp" placeholder="0.00" min="0" step="0.01" value="0" />
+            </div>
+          </div>
+          <div class="col-6">
+            <label class="lbl" for="insurance">Insurance (USD)</label>
+            <div class="inp-wrap">
+              <span class="inp-prefix">$</span>
+              <input type="number" id="insurance" class="inp" placeholder="0.00" min="0" step="0.01" value="0" />
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-gold w-100" id="duty-btn" onclick="calcDuty()">
+          <i class="bi bi-calculator me-2"></i>Calculate Import Duty
+        </button>
+        <div id="duty-err" class="note-error mt-3 hidden"></div>
+      </div>
+
+      <!-- Rate reference -->
+      <div class="mt-4">
+        <span class="tag">Indicative Duty Rates</span>
+        <div class="card-sm">
+          <table class="band-table">
+            <thead><tr><th>Category</th><th style="text-align:right">Duty</th><th style="text-align:right">Surtax</th></tr></thead>
+            <tbody>
+              <tr><td>Electronics</td><td style="text-align:right;font-family:var(--font-m)">25%</td><td style="text-align:right;font-family:var(--font-m)">10%</td></tr>
+              <tr><td>Clothing</td><td style="text-align:right;font-family:var(--font-m)">40%</td><td style="text-align:right;font-family:var(--font-m)">5%</td></tr>
+              <tr><td>Vehicle</td><td style="text-align:right;font-family:var(--font-m)">40%</td><td style="text-align:right;font-family:var(--font-m)">25%</td></tr>
+              <tr><td>Furniture</td><td style="text-align:right;font-family:var(--font-m)">40%</td><td style="text-align:right;font-family:var(--font-m)">10%</td></tr>
+              <tr><td>Food</td><td style="text-align:right;font-family:var(--font-m)">10%</td><td style="text-align:right;font-family:var(--font-m)">0%</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:.72rem;color:var(--muted);margin-top:.75rem;margin-bottom:0">VAT: 14.5% on (CIF + duty) · Source: ZIMRA tariff schedules</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Results -->
+    <div class="col-lg-7">
+      <div id="duty-ph" class="card-l text-center py-5">
+        <i class="bi bi-box-seam" style="font-size:3rem;color:var(--border)"></i>
+        <p style="color:var(--muted);margin-top:1rem;font-size:.9rem">Enter item details and click Calculate to see the duty breakdown.</p>
+      </div>
+
+      <div id="duty-results" class="hidden">
+
+        <!-- Total landed cost -->
+        <div class="card-l mb-4" style="background:linear-gradient(135deg,var(--card),rgba(212,160,23,.05));border-color:rgba(212,160,23,.25)">
+          <div class="row align-items-center">
+            <div class="col">
+              <span class="lbl" style="color:var(--gold)">Total Landed Cost</span>
+              <div class="r-net" style="color:var(--gold-light)" id="r-total">—</div>
+              <div style="font-size:.78rem;color:var(--muted);margin-top:.25rem" id="r-category">—</div>
+            </div>
+            <div class="col-auto text-end">
+              <span class="lbl">Duty Rate</span>
+              <div style="font-size:1.9rem;font-family:var(--font-d);font-weight:700;color:var(--text)" id="r-duty-rate">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Breakdown cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-6">
+            <div class="card-sm">
+              <span class="lbl">CIF Value</span>
+              <div class="r-val" id="r-cif">—</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="card-sm">
+              <span class="lbl">Duty Amount</span>
+              <div class="r-val" style="color:var(--red)" id="r-duty-amt">—</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="card-sm">
+              <span class="lbl">VAT (14.5%)</span>
+              <div class="r-val" style="color:var(--red)" id="r-vat">—</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="card-sm">
+              <span class="lbl">Surtax</span>
+              <div class="r-val" style="color:var(--amber,#FFB347)" id="r-surtax">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WhatsApp share -->
+        <div class="card-sm mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div>
+            <span class="lbl mb-1">Share this estimate</span>
+            <p style="font-size:.82rem;color:var(--text-dim);margin:0">Send the breakdown via WhatsApp</p>
+          </div>
+          <a id="wa-btn" href="#" target="_blank" class="btn-gold" style="text-decoration:none;background:#25D366">
+            <i class="bi bi-whatsapp me-2"></i>Share
+          </a>
+        </div>
+
+        <div class="note-disclaimer">
+          <i class="bi bi-shield-check"></i>
+          <span id="r-disclaimer"></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const fmt = v => '$' + parseFloat(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  async function calcDuty() {
+    const category     = document.getElementById('cat').value;
+    const item_value   = parseFloat(document.getElementById('value').value);
+    const shipping     = parseFloat(document.getElementById('shipping').value) || 0;
+    const insurance    = parseFloat(document.getElementById('insurance').value) || 0;
+    const btn          = document.getElementById('duty-btn');
+    const err          = document.getElementById('duty-err');
+    err.classList.add('hidden');
+
+    if (!item_value || item_value <= 0) {
+      err.textContent = 'Please enter a valid item value.';
+      err.classList.remove('hidden'); return;
+    }
+
+    btn.innerHTML = '<span class="spin me-2"></span>Calculating…';
+    btn.disabled  = true;
+
+    try {
+      const res = await fetch('/api/import-duty/calculate', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({category, item_value_usd: item_value, shipping_usd: shipping, insurance_usd: insurance})
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.detail || 'Calculation failed');
+
+      document.getElementById('r-total').textContent    = fmt(d.total_landed_cost);
+      document.getElementById('r-category').textContent = d.category;
+      document.getElementById('r-duty-rate').textContent = (d.duty_rate * 100).toFixed(0) + '%';
+      document.getElementById('r-cif').textContent       = fmt(d.cif_value);
+      document.getElementById('r-duty-amt').textContent  = fmt(d.duty_amount);
+      document.getElementById('r-vat').textContent       = fmt(d.vat_amount);
+      document.getElementById('r-surtax').textContent    = fmt(d.surtax_amount);
+      document.getElementById('r-disclaimer').textContent = d.disclaimer;
+
+      // WhatsApp message
+      const msg = encodeURIComponent(
+        `🚢 *TaxLens Zimbabwe — Import Duty Estimate*\n\n` +
+        `Category: ${d.category}\n` +
+        `CIF Value: ${fmt(d.cif_value)}\n` +
+        `Duty (${(d.duty_rate*100).toFixed(0)}%): ${fmt(d.duty_amount)}\n` +
+        `VAT (14.5%): ${fmt(d.vat_amount)}\n` +
+        `Surtax: ${fmt(d.surtax_amount)}\n` +
+        `*Total Landed Cost: ${fmt(d.total_landed_cost)}*\n\n` +
+        `_Estimates only. Verify with ZIMRA._`
+      );
+      document.getElementById('wa-btn').href = `https://wa.me/?text=${msg}`;
+
+      document.getElementById('duty-ph').classList.add('hidden');
+      document.getElementById('duty-results').classList.remove('hidden');
+    } catch(e) {
+      err.textContent = e.message; err.classList.remove('hidden');
+    } finally {
+      btn.innerHTML = '<i class="bi bi-calculator me-2"></i>Calculate Import Duty';
+      btn.disabled  = false;
+    }
+  }
+
+  document.getElementById('value').addEventListener('keydown', e => { if (e.key==='Enter') calcDuty(); });
+</script>
+{% endblock %}

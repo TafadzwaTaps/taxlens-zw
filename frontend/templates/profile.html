@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% set active_page = "profile" %}
+{% block title %}My Profile — TaxLens Zimbabwe{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+  <div class="row g-5">
+
+    <div class="col-lg-5">
+      <span class="tag">Account</span>
+      <h1 style="font-size:1.85rem;font-weight:800;letter-spacing:-.03em;margin-bottom:1.5rem">My Profile</h1>
+
+      <!-- Profile card -->
+      <div class="card-l mb-4" id="profile-card">
+        <div class="text-center py-2 mb-3">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 0.75rem;font-size:1.5rem;font-weight:700;color:var(--dark)" id="avatar-initial">?</div>
+          <div style="font-weight:700;font-size:1.1rem" id="p-name">Loading…</div>
+          <div style="font-size:.82rem;color:var(--muted)" id="p-email"></div>
+          <span class="badge-ok mt-2 d-inline-block" id="p-plan" style="font-size:.78rem">FREE</span>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="mb-3">
+          <label class="lbl" for="edit-name">Display Name</label>
+          <input type="text" id="edit-name" class="inp" placeholder="Your name" />
+        </div>
+        <button class="btn-gold w-100 mb-2" onclick="updateProfile()">
+          <i class="bi bi-check2 me-2"></i>Save Changes
+        </button>
+        <div id="profile-msg" class="hidden mt-2" style="font-size:.82rem"></div>
+      </div>
+
+      <!-- Change password -->
+      <div class="card-l mb-4">
+        <span class="tag mb-3">Change Password</span>
+        <div class="mb-3">
+          <label class="lbl">Current Password</label>
+          <input type="password" id="old-pw" class="inp" placeholder="••••••••" />
+        </div>
+        <div class="mb-4">
+          <label class="lbl">New Password</label>
+          <input type="password" id="new-pw" class="inp" placeholder="Min. 8 characters" />
+        </div>
+        <button class="btn-gold w-100" onclick="changePw()">
+          <i class="bi bi-shield-lock me-2"></i>Update Password
+        </button>
+        <div id="pw-msg" class="hidden mt-2" style="font-size:.82rem"></div>
+      </div>
+
+      <!-- Logout -->
+      <button class="btn-ghost w-100" onclick="doLogout()">
+        <i class="bi bi-box-arrow-right me-2"></i>Sign Out
+      </button>
+    </div>
+
+    <!-- Subscription -->
+    <div class="col-lg-7">
+      <span class="tag">Subscription</span>
+      <h2 style="font-size:1.4rem;font-weight:700;margin-bottom:1.25rem">Plan & Usage</h2>
+
+      <div id="sub-loading" class="text-center py-4">
+        <div class="spin mx-auto" style="width:24px;height:24px;border-width:3px"></div>
+      </div>
+
+      <div id="sub-content" class="hidden">
+        <!-- Usage -->
+        <div class="card-sm mb-4">
+          <span class="lbl mb-2">Payslip Scans This Month</span>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span style="font-size:.85rem;color:var(--text-dim)" id="sub-scan-label">0 / 5 used</span>
+            <span style="font-size:.78rem;color:var(--muted)" id="sub-scan-pct">0%</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" id="sub-scan-bar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <!-- Feature table -->
+        <div class="card-l mb-4" style="padding:0;overflow:hidden">
+          <table style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr style="background:var(--surface);border-bottom:1px solid var(--border)">
+                <th style="padding:.85rem 1.25rem;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:left">Feature</th>
+                <th style="padding:.85rem 1rem;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:center">Free</th>
+                <th style="padding:.85rem 1rem;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:center">Pro</th>
+                <th style="padding:.85rem 1rem;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;text-align:center">Accountant</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border)"><td style="padding:.75rem 1.25rem;font-size:.875rem">Payslip scans/month</td><td style="text-align:center;font-size:.875rem">5</td><td style="text-align:center;font-size:.875rem">∞</td><td style="text-align:center;font-size:.875rem">∞</td></tr>
+              <tr style="border-bottom:1px solid var(--border)"><td style="padding:.75rem 1.25rem;font-size:.875rem">Employees</td><td style="text-align:center;font-size:.875rem">3</td><td style="text-align:center;font-size:.875rem">50</td><td style="text-align:center;font-size:.875rem">∞</td></tr>
+              <tr style="border-bottom:1px solid var(--border)"><td style="padding:.75rem 1.25rem;font-size:.875rem">Payroll history</td><td style="text-align:center"><i class="bi bi-x" style="color:var(--red)"></i></td><td style="text-align:center"><i class="bi bi-check2" style="color:var(--green)"></i></td><td style="text-align:center"><i class="bi bi-check2" style="color:var(--green)"></i></td></tr>
+              <tr style="border-bottom:1px solid var(--border)"><td style="padding:.75rem 1.25rem;font-size:.875rem">PDF exports</td><td style="text-align:center"><i class="bi bi-x" style="color:var(--red)"></i></td><td style="text-align:center"><i class="bi bi-check2" style="color:var(--green)"></i></td><td style="text-align:center"><i class="bi bi-check2" style="color:var(--green)"></i></td></tr>
+              <tr><td style="padding:.75rem 1.25rem;font-size:.875rem">Price / month</td><td style="text-align:center;font-size:.875rem;font-family:var(--font-m)">$0</td><td style="text-align:center;font-size:.875rem;font-family:var(--font-m)">$9</td><td style="text-align:center;font-size:.875rem;font-family:var(--font-m)">$25</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Upgrade CTA -->
+        <div id="upgrade-cta" class="card-sm" style="background:rgba(212,160,23,.07);border-color:rgba(212,160,23,.2)">
+          <p style="font-size:.9rem;font-weight:600;margin-bottom:.5rem">Upgrade Your Plan</p>
+          <p style="font-size:.82rem;color:var(--text-dim);margin-bottom:1rem">Payment integration coming soon. Contact us to upgrade manually.</p>
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="mailto:hello@taxlens.co.zw?subject=Upgrade to Pro" class="btn-gold" style="text-decoration:none;font-size:.85rem">
+              <i class="bi bi-envelope me-2"></i>Upgrade to Pro — $9/mo
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const token = () => localStorage.getItem('tl_token');
+
+  async function loadProfile() {
+    if (!token()) { window.location.href = '/auth/login'; return; }
+    try {
+      const [meRes, subRes] = await Promise.all([
+        fetch('/api/auth/me',              {headers:{'Authorization':'Bearer '+token()}}),
+        fetch('/api/subscription/status',  {headers:{'Authorization':'Bearer '+token()}}),
+      ]);
+      if (meRes.status === 401) { window.location.href = '/auth/login'; return; }
+
+      const me  = await meRes.json();
+      const sub = await subRes.json();
+
+      document.getElementById('avatar-initial').textContent = me.full_name[0].toUpperCase();
+      document.getElementById('p-name').textContent  = me.full_name;
+      document.getElementById('p-email').textContent = me.email;
+      document.getElementById('p-plan').textContent  = (me.plan||'free').toUpperCase() + ' PLAN';
+      document.getElementById('edit-name').value     = me.full_name;
+
+      const pct = sub.scans_limit === 999 ? 0 : Math.round(sub.scans_used / sub.scans_limit * 100);
+      document.getElementById('sub-scan-label').textContent = `${sub.scans_used} / ${sub.scans_limit === 999 ? '∞' : sub.scans_limit} used`;
+      document.getElementById('sub-scan-pct').textContent   = `${pct}%`;
+      document.getElementById('sub-scan-bar').style.width   = `${Math.min(pct,100)}%`;
+
+      if (!sub.can_upgrade) document.getElementById('upgrade-cta').classList.add('hidden');
+
+      document.getElementById('sub-loading').classList.add('hidden');
+      document.getElementById('sub-content').classList.remove('hidden');
+    } catch(e) {
+      document.getElementById('sub-loading').innerHTML = `<p style="color:var(--red)">Error: ${e.message}</p>`;
+    }
+  }
+
+  async function updateProfile() {
+    const name = document.getElementById('edit-name').value.trim();
+    const msg  = document.getElementById('profile-msg');
+    if (!name) return;
+    try {
+      const res = await fetch('/api/auth/me', {
+        method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token()},
+        body: JSON.stringify({full_name: name})
+      });
+      const d = await res.json();
+      msg.textContent = res.ok ? '✓ Profile updated.' : d.detail;
+      msg.style.color = res.ok ? 'var(--green)' : 'var(--red)';
+      msg.classList.remove('hidden');
+      if (res.ok) localStorage.setItem('tl_user_name', name);
+    } catch(e) { msg.textContent = e.message; msg.style.color='var(--red)'; msg.classList.remove('hidden'); }
+  }
+
+  async function changePw() {
+    const old_password = document.getElementById('old-pw').value;
+    const new_password = document.getElementById('new-pw').value;
+    const msg = document.getElementById('pw-msg');
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token()},
+        body: JSON.stringify({old_password, new_password})
+      });
+      const d = await res.json();
+      msg.textContent = res.ok ? '✓ Password changed.' : d.detail;
+      msg.style.color = res.ok ? 'var(--green)' : 'var(--red)';
+      msg.classList.remove('hidden');
+    } catch(e) { msg.textContent = e.message; msg.style.color='var(--red)'; msg.classList.remove('hidden'); }
+  }
+
+  function doLogout() {
+    localStorage.removeItem('tl_token');
+    localStorage.removeItem('tl_user_name');
+    localStorage.removeItem('tl_plan');
+    window.location.href = '/';
+  }
+
+  loadProfile();
+</script>
+{% endblock %}

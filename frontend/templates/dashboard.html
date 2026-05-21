@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% set active_page = "dashboard" %}
+{% block title %}Dashboard — TaxLens Zimbabwe{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-xl py-4">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <span class="tag">Overview</span>
+      <h1 style="font-size:1.7rem;font-weight:800;letter-spacing:-.03em" id="dash-greeting">Dashboard</h1>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="/employees" class="btn-ghost" style="text-decoration:none;font-size:.85rem">
+        <i class="bi bi-people me-1"></i>Employees
+      </a>
+      <a href="/payroll-history" class="btn-ghost" style="text-decoration:none;font-size:.85rem">
+        <i class="bi bi-clock-history me-1"></i>History
+      </a>
+    </div>
+  </div>
+
+  <!-- Auth gate -->
+  <div id="auth-gate" class="card-l text-center py-5 hidden">
+    <i class="bi bi-lock" style="font-size:2.5rem;color:var(--border)"></i>
+    <p style="color:var(--muted);margin-top:1rem">Please <a href="/auth/login" style="color:var(--gold)">sign in</a> to view your dashboard.</p>
+  </div>
+
+  <!-- Loading -->
+  <div id="dash-loading" class="text-center py-5">
+    <div class="spin mx-auto" style="width:32px;height:32px;border-width:3px"></div>
+    <p style="color:var(--muted);margin-top:1rem">Loading dashboard…</p>
+  </div>
+
+  <!-- Dashboard content -->
+  <div id="dash-content" class="hidden">
+
+    <!-- Plan badge + scan usage -->
+    <div class="card-sm mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <span id="plan-badge" class="badge-ok" style="font-size:.85rem"></span>
+        <span style="font-size:.85rem;color:var(--text-dim)" id="scan-usage"></span>
+      </div>
+      <a href="/api/subscription/plans" target="_blank" class="btn-ghost" style="font-size:.78rem;text-decoration:none">
+        <i class="bi bi-arrow-up-circle me-1"></i>Upgrade Plan
+      </a>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="card-sm text-center">
+          <span class="lbl">Employees</span>
+          <div style="font-size:2rem;font-family:var(--font-d);font-weight:700;color:var(--gold-light)" id="stat-employees">—</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card-sm text-center">
+          <span class="lbl">Monthly Gross</span>
+          <div class="r-val" id="stat-gross">—</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card-sm text-center">
+          <span class="lbl">Monthly PAYE</span>
+          <div class="r-val" style="color:var(--red)" id="stat-paye">—</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card-sm text-center">
+          <span class="lbl">Monthly Net</span>
+          <div class="r-val" style="color:var(--green)" id="stat-net">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart + recent runs -->
+    <div class="row g-4 mb-4">
+      <div class="col-lg-6">
+        <div class="card-l h-100">
+          <span class="tag mb-3">Payroll Breakdown</span>
+          <canvas id="payroll-chart" height="200"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card-l h-100">
+          <span class="tag mb-3">Recent Payroll Runs</span>
+          <div id="recent-runs-list">
+            <p style="color:var(--muted);font-size:.875rem">No payroll runs yet.</p>
+          </div>
+          <a href="/payroll-history" style="color:var(--gold);text-decoration:none;font-size:.85rem;margin-top:1rem;display:inline-block">
+            View full history <i class="bi bi-arrow-right ms-1"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="row g-3">
+      <div class="col-6 col-md-3">
+        <a href="/calculator" class="card-sm d-block text-center" style="text-decoration:none;transition:border-color .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+          <i class="bi bi-calculator" style="font-size:1.5rem;color:var(--gold);display:block;margin-bottom:.5rem"></i>
+          <span style="font-size:.82rem;color:var(--text-dim)">Calculator</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="/analyzer" class="card-sm d-block text-center" style="text-decoration:none;transition:border-color .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+          <i class="bi bi-file-earmark-text" style="font-size:1.5rem;color:var(--gold);display:block;margin-bottom:.5rem"></i>
+          <span style="font-size:.82rem;color:var(--text-dim)">Analyzer</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="/employees" class="card-sm d-block text-center" style="text-decoration:none;transition:border-color .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+          <i class="bi bi-people" style="font-size:1.5rem;color:var(--gold);display:block;margin-bottom:.5rem"></i>
+          <span style="font-size:.82rem;color:var(--text-dim)">Employees</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="/import-duty" class="card-sm d-block text-center" style="text-decoration:none;transition:border-color .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+          <i class="bi bi-box-seam" style="font-size:1.5rem;color:var(--gold);display:block;margin-bottom:.5rem"></i>
+          <span style="font-size:.82rem;color:var(--text-dim)">Import Duty</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const fmt = v => '$' + parseFloat(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const token = () => localStorage.getItem('tl_token');
+
+  async function loadDashboard() {
+    if (!token()) {
+      document.getElementById('dash-loading').classList.add('hidden');
+      document.getElementById('auth-gate').classList.remove('hidden');
+      return;
+    }
+    try {
+      const res = await fetch('/api/dashboard/stats', {
+        headers: {'Authorization': 'Bearer ' + token()}
+      });
+      if (res.status === 401) { window.location.href = '/auth/login'; return; }
+      const d = await res.json();
+
+      document.getElementById('dash-greeting').textContent =
+        'Hello, ' + (localStorage.getItem('tl_user_name') || 'there') + ' 👋';
+
+      // Plan badge
+      const planEl = document.getElementById('plan-badge');
+      planEl.textContent = (d.plan || 'free').toUpperCase() + ' PLAN';
+      planEl.className   = d.plan === 'free' ? 'badge-none' : 'badge-ok';
+
+      document.getElementById('scan-usage').textContent =
+        d.scans_used + ' / ' + (d.scans_limit === 999 ? '∞' : d.scans_limit) + ' scans used this month';
+
+      // Stats
+      document.getElementById('stat-employees').textContent = d.employee_count;
+      document.getElementById('stat-gross').textContent     = fmt(d.total_monthly_gross);
+      document.getElementById('stat-paye').textContent      = fmt(d.total_monthly_paye);
+      document.getElementById('stat-net').textContent       = fmt(d.total_monthly_net);
+
+      // Chart
+      const ctx = document.getElementById('payroll-chart').getContext('2d');
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Net Pay', 'PAYE', 'NSSA', 'AIDS Levy'],
+          datasets: [{
+            data: [
+              d.total_monthly_net,
+              d.total_monthly_paye,
+              d.total_monthly_nssa,
+              d.total_monthly_paye * 0.03,
+            ],
+            backgroundColor: ['#4CAF50','#FF6B6B','#D4A017','#A8B5A8'],
+            borderWidth: 0,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { labels: { color: '#A8B5A8', font: { size: 11 } } }
+          }
+        }
+      });
+
+      // Recent runs
+      const runsEl = document.getElementById('recent-runs-list');
+      if (d.recent_runs && d.recent_runs.length) {
+        runsEl.innerHTML = d.recent_runs.map(r => `
+          <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom:1px solid var(--border)">
+            <div>
+              <div style="font-size:.85rem;font-weight:600">${r.period_month}/${r.period_year}</div>
+              <div style="font-size:.75rem;color:var(--muted)">${r.employee_count} employee(s)</div>
+            </div>
+            <div class="text-end">
+              <div class="mono" style="font-size:.85rem">${fmt(r.total_net)}</div>
+              <div style="font-size:.72rem;color:var(--muted)">net payable</div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      document.getElementById('dash-loading').classList.add('hidden');
+      document.getElementById('dash-content').classList.remove('hidden');
+    } catch (e) {
+      document.getElementById('dash-loading').innerHTML =
+        `<p style="color:var(--red)">Failed to load dashboard: ${e.message}</p>`;
+    }
+  }
+
+  loadDashboard();
+</script>
+{% endblock %}

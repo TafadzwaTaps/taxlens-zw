@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% set active_page = "signup" %}
+{% block title %}Create Account — TaxLens Zimbabwe{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+
+      <div class="text-center mb-4">
+        <span class="tag">Get Started Free</span>
+        <h1 style="font-size:1.8rem;font-weight:800;letter-spacing:-.03em">Create your account</h1>
+        <p style="color:var(--text-dim);font-size:.9rem;margin-top:.5rem">
+          Free plan — no credit card required.
+        </p>
+      </div>
+
+      <div class="card-l">
+        <div class="mb-3">
+          <label class="lbl" for="full_name">Full Name</label>
+          <input type="text" id="full_name" class="inp" placeholder="Tendai Moyo" />
+        </div>
+        <div class="mb-3">
+          <label class="lbl" for="email">Email Address</label>
+          <input type="email" id="email" class="inp" placeholder="you@example.com" />
+        </div>
+        <div class="mb-3">
+          <label class="lbl" for="password">Password</label>
+          <input type="password" id="password" class="inp" placeholder="Min. 8 characters" />
+        </div>
+        <div class="mb-4">
+          <label class="lbl" for="role">Account Type</label>
+          <select id="role" class="inp">
+            <option value="user">Employee / Individual</option>
+            <option value="accountant">Accountant / HR Professional</option>
+          </select>
+        </div>
+
+        <button class="btn-gold w-100" id="signup-btn" onclick="doSignup()">
+          <i class="bi bi-person-plus me-2"></i>Create Account
+        </button>
+
+        <div id="signup-err" class="note-error mt-3 hidden"></div>
+
+        <div class="hr"></div>
+
+        <!-- Plan comparison -->
+        <div style="font-size:.8rem;color:var(--text-dim)">
+          <p style="font-weight:600;margin-bottom:.5rem;color:var(--text)">Free plan includes:</p>
+          <ul style="list-style:none;padding:0;margin:0">
+            <li style="padding:.25rem 0"><i class="bi bi-check2 me-2" style="color:var(--gold)"></i>5 payslip scans/month</li>
+            <li style="padding:.25rem 0"><i class="bi bi-check2 me-2" style="color:var(--gold)"></i>Manual PAYE calculator</li>
+            <li style="padding:.25rem 0"><i class="bi bi-check2 me-2" style="color:var(--gold)"></i>Import duty estimator</li>
+            <li style="padding:.25rem 0"><i class="bi bi-check2 me-2" style="color:var(--gold)"></i>Up to 3 employees</li>
+          </ul>
+        </div>
+
+        <div class="hr"></div>
+
+        <p style="text-align:center;font-size:.85rem;color:var(--text-dim);margin:0">
+          Already have an account?
+          <a href="/auth/login" style="color:var(--gold);text-decoration:none;font-weight:600">Sign in</a>
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  async function doSignup() {
+    const full_name = document.getElementById('full_name').value.trim();
+    const email     = document.getElementById('email').value.trim();
+    const password  = document.getElementById('password').value;
+    const role      = document.getElementById('role').value;
+    const btn       = document.getElementById('signup-btn');
+    const err       = document.getElementById('signup-err');
+    err.classList.add('hidden');
+
+    if (!full_name || !email || !password) {
+      err.textContent = 'Please fill in all fields.';
+      err.classList.remove('hidden'); return;
+    }
+
+    btn.innerHTML = '<span class="spin me-2"></span>Creating account…';
+    btn.disabled  = true;
+
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({full_name, email, password, role})
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.detail || 'Signup failed');
+
+      localStorage.setItem('tl_token',     d.access_token);
+      localStorage.setItem('tl_user_name', d.full_name);
+      localStorage.setItem('tl_plan',      d.plan);
+
+      window.location.href = '/dashboard';
+    } catch (e) {
+      err.textContent = e.message;
+      err.classList.remove('hidden');
+    } finally {
+      btn.innerHTML = '<i class="bi bi-person-plus me-2"></i>Create Account';
+      btn.disabled  = false;
+    }
+  }
+</script>
+{% endblock %}

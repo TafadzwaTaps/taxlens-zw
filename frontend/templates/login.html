@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% set active_page = "login" %}
+{% block title %}Login — TaxLens Zimbabwe{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+
+      <div class="text-center mb-4">
+        <span class="tag">Your Account</span>
+        <h1 style="font-size:1.8rem;font-weight:800;letter-spacing:-.03em">Welcome back</h1>
+        <p style="color:var(--text-dim);font-size:.9rem;margin-top:.5rem">
+          Sign in to access your payroll history and employees.
+        </p>
+      </div>
+
+      <div class="card-l">
+        <div class="mb-3">
+          <label class="lbl" for="email">Email address</label>
+          <input type="email" id="email" class="inp" placeholder="you@example.com" />
+        </div>
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <label class="lbl" style="margin-bottom:0" for="password">Password</label>
+            <a href="/auth/forgot-password" style="font-size:.78rem;color:var(--gold);text-decoration:none">Forgot?</a>
+          </div>
+          <input type="password" id="password" class="inp" placeholder="••••••••" />
+        </div>
+
+        <button class="btn-gold w-100" id="login-btn" onclick="doLogin()">
+          <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+        </button>
+
+        <div id="login-err" class="note-error mt-3 hidden"></div>
+
+        <div class="hr"></div>
+
+        <p style="text-align:center;font-size:.85rem;color:var(--text-dim);margin:0">
+          Don't have an account?
+          <a href="/auth/signup" style="color:var(--gold);text-decoration:none;font-weight:600">Create one free</a>
+        </p>
+      </div>
+
+      <p style="text-align:center;font-size:.78rem;color:var(--muted);margin-top:1.5rem">
+        No account needed for the
+        <a href="/calculator" style="color:var(--gold);text-decoration:none">calculator</a> or
+        <a href="/analyzer" style="color:var(--gold);text-decoration:none">payslip analyzer</a>.
+      </p>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  async function doLogin() {
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn      = document.getElementById('login-btn');
+    const err      = document.getElementById('login-err');
+    err.classList.add('hidden');
+
+    if (!email || !password) {
+      err.textContent = 'Please enter your email and password.';
+      err.classList.remove('hidden'); return;
+    }
+
+    btn.innerHTML = '<span class="spin me-2"></span>Signing in…';
+    btn.disabled  = true;
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({email, password})
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.detail || 'Login failed');
+
+      // Store token
+      localStorage.setItem('tl_token',     d.access_token);
+      localStorage.setItem('tl_user_name', d.full_name);
+      localStorage.setItem('tl_plan',      d.plan);
+
+      window.location.href = '/dashboard';
+    } catch (e) {
+      err.textContent = e.message;
+      err.classList.remove('hidden');
+    } finally {
+      btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Sign In';
+      btn.disabled  = false;
+    }
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+{% endblock %}

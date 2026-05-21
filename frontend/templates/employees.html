@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% set active_page = "employees" %}
+{% block title %}Employees — TaxLens Zimbabwe{% endblock %}
+
+{% block content %}
+<div class="container-xl py-4">
+
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <span class="tag">Employee Management</span>
+      <h1 style="font-size:1.7rem;font-weight:800;letter-spacing:-.03em">Employees</h1>
+    </div>
+    <button class="btn-gold" onclick="showAddModal()">
+      <i class="bi bi-person-plus me-2"></i>Add Employee
+    </button>
+  </div>
+
+  <!-- Employee list -->
+  <div id="emp-loading" class="text-center py-5">
+    <div class="spin mx-auto" style="width:28px;height:28px;border-width:3px"></div>
+    <p style="color:var(--muted);margin-top:1rem;font-size:.9rem">Loading employees…</p>
+  </div>
+
+  <div id="emp-empty" class="card-l text-center py-5 hidden">
+    <i class="bi bi-people" style="font-size:2.5rem;color:var(--border)"></i>
+    <p style="color:var(--muted);margin-top:1rem">No employees yet. Click <strong>Add Employee</strong> to get started.</p>
+  </div>
+
+  <div id="emp-list" class="hidden">
+    <!-- Mobile: cards | Desktop: table -->
+    <div class="d-block d-md-none" id="emp-cards"></div>
+    <div class="d-none d-md-block">
+      <div class="card-l" style="padding:0;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="background:var(--surface);border-bottom:1px solid var(--border)">
+              <th style="padding:.9rem 1.25rem;text-align:left;font-size:.78rem;color:var(--muted);letter-spacing:.06em;font-weight:600;text-transform:uppercase">Name</th>
+              <th style="padding:.9rem 1rem;font-size:.78rem;color:var(--muted);letter-spacing:.06em;font-weight:600;text-transform:uppercase">Dept / Position</th>
+              <th style="padding:.9rem 1rem;font-size:.78rem;color:var(--muted);letter-spacing:.06em;font-weight:600;text-transform:uppercase;text-align:right">Gross</th>
+              <th style="padding:.9rem 1rem;font-size:.78rem;color:var(--muted);letter-spacing:.06em;font-weight:600;text-transform:uppercase;text-align:right">Est. PAYE</th>
+              <th style="padding:.9rem 1rem;font-size:.78rem;color:var(--muted);letter-spacing:.06em;font-weight:600;text-transform:uppercase;text-align:right">Net</th>
+              <th style="padding:.9rem 1rem"></th>
+            </tr>
+          </thead>
+          <tbody id="emp-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="emp-err" class="note-error hidden mt-3"></div>
+
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="emp-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem">
+  <div class="card-l" style="width:100%;max-width:480px;max-height:90vh;overflow-y:auto">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 style="font-size:1.1rem;font-weight:700;margin:0" id="modal-title">Add Employee</h3>
+      <button onclick="closeModal()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <input type="hidden" id="emp-edit-id" />
+
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="lbl">Full Name *</label>
+        <input type="text" id="f-name" class="inp" placeholder="Tendai Moyo" />
+      </div>
+      <div class="col-6">
+        <label class="lbl">Employee ID *</label>
+        <input type="text" id="f-empid" class="inp" placeholder="EMP-001" />
+      </div>
+      <div class="col-6">
+        <label class="lbl">Gross Salary (monthly) *</label>
+        <input type="number" id="f-salary" class="inp" placeholder="1500" min="1" step="0.01" />
+      </div>
+      <div class="col-6">
+        <label class="lbl">Currency</label>
+        <select id="f-currency" class="inp">
+          <option value="USD">USD</option>
+          <option value="ZiG">ZiG</option>
+        </select>
+      </div>
+      <div class="col-6">
+        <label class="lbl">Department</label>
+        <input type="text" id="f-dept" class="inp" placeholder="Engineering" />
+      </div>
+      <div class="col-12">
+        <label class="lbl">Position / Title</label>
+        <input type="text" id="f-pos" class="inp" placeholder="Senior Developer" />
+      </div>
+      <div class="col-6">
+        <label class="lbl">Tax Number</label>
+        <input type="text" id="f-tax" class="inp" placeholder="Optional" />
+      </div>
+      <div class="col-6">
+        <label class="lbl">NSSA Number</label>
+        <input type="text" id="f-nssa" class="inp" placeholder="Optional" />
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-4">
+      <button class="btn-gold flex-fill" id="modal-save-btn" onclick="saveEmployee()">
+        <i class="bi bi-check2 me-2"></i>Save Employee
+      </button>
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+    <div id="modal-err" class="note-error mt-3 hidden"></div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const token = () => localStorage.getItem('tl_token');
+  const fmt   = v => '$' + parseFloat(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  let employees = [];
+
+  async function loadEmployees() {
+    if (!token()) { window.location.href = '/auth/login'; return; }
+    try {
+      const res = await fetch('/api/employees', {headers:{'Authorization':'Bearer '+token()}});
+      if (res.status === 401) { window.location.href = '/auth/login'; return; }
+      employees = await res.json();
+      renderEmployees();
+    } catch (e) {
+      document.getElementById('emp-loading').classList.add('hidden');
+      document.getElementById('emp-err').textContent = 'Failed to load: ' + e.message;
+      document.getElementById('emp-err').classList.remove('hidden');
+    }
+  }
+
+  function renderEmployees() {
+    document.getElementById('emp-loading').classList.add('hidden');
+    if (!employees.length) {
+      document.getElementById('emp-empty').classList.remove('hidden'); return;
+    }
+    document.getElementById('emp-list').classList.remove('hidden');
+
+    // Table rows
+    document.getElementById('emp-tbody').innerHTML = employees.map(e => {
+      const paye = (e.gross_salary * 0.08).toFixed(2); // rough estimate placeholder
+      return `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:.85rem 1.25rem">
+          <div style="font-weight:600;font-size:.9rem">${e.full_name}</div>
+          <div style="font-size:.75rem;color:var(--muted)">${e.employee_id}</div>
+        </td>
+        <td style="padding:.85rem 1rem;font-size:.85rem;color:var(--text-dim)">${e.department||'—'}<br><span style="font-size:.75rem">${e.position||''}</span></td>
+        <td style="padding:.85rem 1rem;text-align:right;font-family:var(--font-m);font-size:.85rem">${fmt(e.gross_salary)}</td>
+        <td style="padding:.85rem 1rem;text-align:right;font-family:var(--font-m);font-size:.85rem;color:var(--red)">~est.</td>
+        <td style="padding:.85rem 1rem;text-align:right;font-family:var(--font-m);font-size:.85rem;color:var(--green)">~est.</td>
+        <td style="padding:.85rem 1rem;text-align:right">
+          <button onclick="editEmployee('${e.id}')" class="btn-ghost" style="padding:.25rem .6rem;font-size:.75rem;margin-right:.25rem"><i class="bi bi-pencil"></i></button>
+          <button onclick="deleteEmployee('${e.id}','${e.full_name}')" class="btn-danger" style="padding:.25rem .6rem;font-size:.75rem"><i class="bi bi-trash3"></i></button>
+        </td>
+      </tr>`;
+    }).join('');
+
+    // Mobile cards
+    document.getElementById('emp-cards').innerHTML = employees.map(e =>
+      `<div class="card-sm mb-3">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <div style="font-weight:600">${e.full_name}</div>
+            <div style="font-size:.78rem;color:var(--muted)">${e.employee_id} · ${e.department||'—'}</div>
+          </div>
+          <div class="mono" style="font-size:.9rem;color:var(--gold-light)">${fmt(e.gross_salary)}</div>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <button onclick="editEmployee('${e.id}')" class="btn-ghost flex-fill" style="font-size:.8rem"><i class="bi bi-pencil me-1"></i>Edit</button>
+          <button onclick="deleteEmployee('${e.id}','${e.full_name}')" class="btn-danger" style="font-size:.8rem"><i class="bi bi-trash3 me-1"></i>Delete</button>
+        </div>
+      </div>`
+    ).join('');
+  }
+
+  function showAddModal() {
+    document.getElementById('modal-title').textContent = 'Add Employee';
+    document.getElementById('emp-edit-id').value = '';
+    ['f-name','f-empid','f-salary','f-dept','f-pos','f-tax','f-nssa'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('emp-modal').style.display = 'flex';
+    document.getElementById('emp-modal').classList.remove('hidden');
+  }
+
+  function editEmployee(id) {
+    const emp = employees.find(e => e.id === id);
+    if (!emp) return;
+    document.getElementById('modal-title').textContent = 'Edit Employee';
+    document.getElementById('emp-edit-id').value = id;
+    document.getElementById('f-name').value     = emp.full_name;
+    document.getElementById('f-empid').value    = emp.employee_id;
+    document.getElementById('f-salary').value   = emp.gross_salary;
+    document.getElementById('f-currency').value = emp.currency;
+    document.getElementById('f-dept').value     = emp.department || '';
+    document.getElementById('f-pos').value      = emp.position   || '';
+    document.getElementById('f-tax').value      = emp.tax_number || '';
+    document.getElementById('f-nssa').value     = emp.nssa_number || '';
+    document.getElementById('emp-modal').style.display = 'flex';
+    document.getElementById('emp-modal').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('emp-modal').style.display = 'none';
+    document.getElementById('modal-err').classList.add('hidden');
+  }
+
+  async function saveEmployee() {
+    const editId = document.getElementById('emp-edit-id').value;
+    const body = {
+      full_name:    document.getElementById('f-name').value.trim(),
+      employee_id:  document.getElementById('f-empid').value.trim(),
+      gross_salary: parseFloat(document.getElementById('f-salary').value),
+      currency:     document.getElementById('f-currency').value,
+      department:   document.getElementById('f-dept').value.trim() || null,
+      position:     document.getElementById('f-pos').value.trim()  || null,
+      tax_number:   document.getElementById('f-tax').value.trim()  || null,
+      nssa_number:  document.getElementById('f-nssa').value.trim() || null,
+    };
+    const btn = document.getElementById('modal-save-btn');
+    const err = document.getElementById('modal-err');
+    err.classList.add('hidden');
+
+    if (!body.full_name || !body.employee_id || !body.gross_salary) {
+      err.textContent = 'Name, Employee ID, and Salary are required.';
+      err.classList.remove('hidden'); return;
+    }
+
+    btn.innerHTML = '<span class="spin me-2"></span>Saving…';
+    btn.disabled = true;
+    try {
+      const url    = editId ? `/api/employees/${editId}` : '/api/employees';
+      const method = editId ? 'PUT' : 'POST';
+      const res    = await fetch(url, {
+        method, headers: {'Content-Type':'application/json','Authorization':'Bearer '+token()},
+        body: JSON.stringify(body)
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.detail || 'Save failed');
+      closeModal();
+      await loadEmployees();
+    } catch (e) {
+      err.textContent = e.message; err.classList.remove('hidden');
+    } finally {
+      btn.innerHTML = '<i class="bi bi-check2 me-2"></i>Save Employee';
+      btn.disabled = false;
+    }
+  }
+
+  async function deleteEmployee(id, name) {
+    if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
+    try {
+      await fetch(`/api/employees/${id}`, {
+        method:'DELETE', headers:{'Authorization':'Bearer '+token()}
+      });
+      await loadEmployees();
+    } catch(e) { alert('Delete failed: ' + e.message); }
+  }
+
+  loadEmployees();
+</script>
+{% endblock %}

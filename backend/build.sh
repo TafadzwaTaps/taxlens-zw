@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# build.sh — executed by Render during deployment.
-# Installs Tesseract OCR (system package) then Python dependencies.
 set -e
 
 echo "━━━ Installing Tesseract OCR ━━━"
